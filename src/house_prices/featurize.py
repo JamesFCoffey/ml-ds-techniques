@@ -103,7 +103,7 @@ def make_preprocessor(
     cat_pipeline = Pipeline(
         [
             ("imputer", SimpleImputer(strategy="constant", fill_value="MISSING")),
-            ("onehot", OneHotEncoder(handle_unknown="ignore", sparse=False)),
+            ("onehot", OneHotEncoder(handle_unknown="ignore", sparse_output=False)),
         ]
     )
 

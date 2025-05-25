@@ -22,7 +22,7 @@ import math
 import xgboost as xgb
 import ydf
 from optuna.integration import TFKerasPruningCallback
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import root_mean_squared_error
 from tensorflow import keras
 from tensorflow.keras import layers, regularizers
 from tensorflow.keras.optimizers import SGD, Adam, RMSprop
@@ -62,7 +62,7 @@ def make_cart_objective(df_train_ydf, df_valid_ydf, y_valid):
             min_examples=min_examples,
         ).train(df_train_ydf)
         preds = model.predict(df_valid_ydf)
-        return mean_squared_error(y_valid, preds, squared=False)
+        return root_mean_squared_error(y_valid, preds)
 
     return objective
 
@@ -101,7 +101,7 @@ def make_rf_objective(df_train_ydf, df_valid_ydf, y_valid):
             **params,
         ).train(df_train_ydf)
         preds = model.predict(df_valid_ydf)
-        return mean_squared_error(y_valid, preds, squared=False)
+        return root_mean_squared_error(y_valid, preds)
 
     return objective
 
@@ -138,7 +138,7 @@ def make_gbts_objective(df_train_ydf, df_valid_ydf, y_valid):
             label="SalePrice", task=ydf.Task.REGRESSION, **params
         ).train(df_train_ydf)
         preds = model.predict(df_valid_ydf)
-        return mean_squared_error(y_valid, preds, squared=False)
+        return root_mean_squared_error(y_valid, preds)
 
     return objective
 
@@ -196,7 +196,7 @@ def make_xgb_objective(X_train, X_valid, y_train, y_valid):
         )
         model.fit(X_train, y_train, eval_set=[(X_valid, y_valid)], verbose=False)
         preds = model.predict(X_valid)
-        return mean_squared_error(y_valid, preds, squared=False)
+        return root_mean_squared_error(y_valid, preds)
 
     return objective
 
@@ -328,7 +328,7 @@ def make_mlp_objective(X_train_mlp, X_valid_mlp, y_train, y_valid):
 
         # Measure RMSE on validation set
         preds = model.predict(X_valid_mlp, verbose=0)
-        rmse = math.sqrt(mean_squared_error(y_valid, preds))
+        rmse = math.sqrt(root_mean_squared_error(y_valid, preds))
         return rmse
 
     return objective

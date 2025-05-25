@@ -1,10 +1,11 @@
 # src/house_prices/train.py
 
 """
-Define Optuna objective‐function factories for the House Prices regression challenge.
+Define Optuna objective‐function factories for the House Prices regression
+challenge.
 
-This module provides factory functions that take preprocessed training and validation
-data and return Optuna‐compatible objectives for:
+This module provides factory functions that take preprocessed training and
+validation data and return Optuna‐compatible objectives for:
 
   - CART (single decision tree)
   - Random Forest
@@ -12,8 +13,8 @@ data and return Optuna‐compatible objectives for:
   - XGBoost
   - Multi‐Layer Perceptron (Keras)
 
-Each returned objective accepts a single `trial` argument and returns the validation
-RMSE to be minimized.
+Each returned objective accepts a single `trial` argument and returns the
+validation RMSE to be minimized.
 """
 
 import math
@@ -47,8 +48,8 @@ def make_cart_objective(df_train_ydf, df_valid_ydf, y_valid):
 
     Returns:
         Callable[[optuna.trial.Trial], float]:
-            A function that Optuna will call; it trains a CART on the training data,
-            predicts on validation data, and returns RMSE.
+            A function that Optuna will call; it trains a CART on the training
+            data, predicts on validation data, and returns RMSE.
     """
 
     def objective(trial):
@@ -80,7 +81,8 @@ def make_rf_objective(df_train_ydf, df_valid_ydf, y_valid):
 
     Returns:
         Callable[[optuna.trial.Trial], float]:
-            Objective that trains a YDF RandomForestLearner and returns validation RMSE.
+            Objective that trains a YDF RandomForestLearner and returns
+            validation RMSE.
     """
 
     def objective(trial):

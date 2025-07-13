@@ -38,7 +38,7 @@ def objective_cat(cv, X, y, groups, gpus):
 
     Returns:
         Callable[[optuna.trial.Trial], float]: Objective that Optuna can
-        maximise. The objective trains CatBoost with early stopping on each
+        maximize. The objective trains CatBoost with early stopping on each
         fold and returns the **mean fold accuracy**.
 
     Notes:

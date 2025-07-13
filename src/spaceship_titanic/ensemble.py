@@ -91,7 +91,7 @@ def run_fold(tr_idx, va_idx, cat_params, lgb_params, xgb_params, X, y):
 def weight_objective(oof_cat, oof_lgb, oof_xgb, y):
     """Return an Optuna objective that finds optimal soft-vote weights.
 
-    The inner objective normalises three candidate weights so they sum to 1,
+    The inner objective normalizes three candidate weights so they sum to 1,
     blends the out-of-fold probability matrices, thresholds at 0.5 and scores
     the result with accuracy.
 

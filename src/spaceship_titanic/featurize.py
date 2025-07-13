@@ -1,3 +1,28 @@
+"""Feature engineering utilities for the Spaceship Titanic competition.
+
+This module turns the raw Kaggle tables into model-ready numeric matrices.
+It exposes:
+
+* Regular-expression constants that parse cabin strings and passenger IDs.
+* :data:`SPEND`, the list of on-board spending columns used repeatedly
+  throughout the feature pipeline.
+* :func:`_row_featurize`, a stateless helper that creates per-row features
+  without any look-ahead.
+* :class:`SpaceshipTransformer`, a scikit-learn‐compatible transformer that
+  handles imputations, binning, rare-category collapsing, one-hot encoding,
+  scaling and optional column dropping.
+
+Typical usage::
+
+    tfm = SpaceshipTransformer(min_freq=0.01).fit(train_df)
+    X_train = tfm.transform(train_df)
+    X_test  = tfm.transform(test_df)
+
+The transformer is **leak-free** by construction—no information from the test
+rows is used when determining bin edges, rare categories, or group-level
+aggregations.
+"""
+
 import re
 
 import numpy as np
@@ -5,13 +30,30 @@ import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
+# Parses the *Cabin* string into deck, numeric cabin and side.
 CABIN_RE = re.compile(r"(?P<deck>[A-Z])/(?P<num>\d+)/(?P<side>[PS])")
+
+# Captures the four-digit family/group number from PassengerId.
 GROUP_RE = re.compile(r"(\d{4})_(\d{2})")
+
+# Column names that represent monetary spend on board.
 SPEND = ["RoomService", "FoodCourt", "ShoppingMall", "Spa", "VRDeck"]
 
 
 def _row_featurize(df: pd.DataFrame) -> pd.DataFrame:
-    """Per-row features – NO look-ahead."""
+    """Create per-row features **without** using information from other rows.
+
+    Args:
+        df: Raw dataframe straight from ``train.csv`` or ``test.csv``.
+
+    Returns:
+        pd.DataFrame: A new frame with
+          * deck/side/cabin-number extracted,
+          * group size, total spend and spend ratios,
+          * binary missing-value flags, engineered crosses, and
+          * identifier columns dropped.
+    """
+
     df = df.copy()
 
     # Cabin split
@@ -62,6 +104,17 @@ def _row_featurize(df: pd.DataFrame) -> pd.DataFrame:
 
 
 class SpaceshipTransformer(BaseEstimator, TransformerMixin):
+    """End-to-end tabular pre-processor for Spaceship Titanic.
+
+    The transformer:
+
+    * Calls :func:`_row_featurize` to generate first-order features.
+    * Builds group-level statistics and numeric bin edges during :py:meth:`fit`.
+    * Applies those statistics, one-hot encodes categoricals, scales total
+      spend, and optionally drops user-supplied columns during
+      :py:meth:`transform`.
+    """
+
     def __init__(
         self,
         min_freq=0.01,
@@ -73,6 +126,22 @@ class SpaceshipTransformer(BaseEstimator, TransformerMixin):
         use_fixed_group_bins=True,
         drop_cols=None,
     ):
+        """Instantiate the transformer with hyper-parameters.
+
+        Args:
+            min_freq: Minimum category frequency (fraction of rows) before a
+              label is lumped into ``"Other"``.
+            n_age_bins: Quantile bins for :data:`Age`.
+            n_spend_bins: Quantile bins for each spend column.
+            n_cabin_bins: Quantile bins for :data:`CabinNum`.
+            n_tot_bins: Quantile bins for :data:`TotalSpend`.
+            n_group_bins: Bins for :data:`GroupSize`.
+            use_fixed_group_bins: If ``True`` use domain‐knowledge cut-points
+              ``[1, 2, 4, 10]`` rather than quantiles.
+            drop_cols: List of column names (or OHE dummy names) to remove
+              after feature construction.  Defaults to ``["GroupNum"]``.
+        """
+
         self.min_freq = min_freq
         self.n_age_bins = n_age_bins
         self.n_spend_bins = n_spend_bins
@@ -84,6 +153,16 @@ class SpaceshipTransformer(BaseEstimator, TransformerMixin):
         self.drop_cols = drop_cols or ["GroupNum"]  # list of col names
 
     def fit(self, X, y=None):
+        """Learn bin edges, group aggregations and encoders from *X*.
+
+        Args:
+            X: Raw feature dataframe.
+            y: Ignored (present only for scikit-learn compatibility).
+
+        Returns:
+            SpaceshipTransformer: ``self`` to allow method chaining.
+        """
+
         df = _row_featurize(X)
 
         # surname counts
@@ -152,6 +231,15 @@ class SpaceshipTransformer(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
+        """Apply the learned transformations to *X*.
+
+        Args:
+            X: Raw feature dataframe.
+
+        Returns:
+            np.ndarray: Dense 2-D numeric array ready for model consumption.
+        """
+
         df = self._apply_transforms(_row_featurize(X))
 
         X_cat = self.ohe_.transform(df[self.cat_cols_])
@@ -166,6 +254,41 @@ class SpaceshipTransformer(BaseEstimator, TransformerMixin):
         return X
 
     def _apply_transforms(self, d):
+        """Apply all learned transformations to a feature-engineered frame.
+
+        This helper is called by :meth:`transform` after the raw dataframe has
+        been converted to first-order features via :func:`_row_featurize`.  It
+        performs imputations, numeric binning, domain buckets, interaction
+        terms, group-level look-ups, rare-category collapsing, and final
+        column dropping.
+
+        Args:
+            d: DataFrame produced by :func:`_row_featurize`. The frame may
+                contain NaNs, unseen category labels, or group IDs that did
+                not appear in the training split.
+
+        Returns:
+            pd.DataFrame: A fully processed dataframe where
+              * all numeric features are imputed and, when applicable, binned
+                into quantiles or domain buckets,
+              * categorical columns have had rare labels consolidated into
+                ``"Other"``,
+              * interaction columns (e.g. ``Cryo_x_Age``) and group-level
+                statistics (e.g. ``GroupAgeMedian``) are added,
+              * and any columns listed in ``self.drop_cols`` are removed.
+              The result is free of NaNs and ready for one-hot encoding /
+              scaling.
+
+        Notes:
+            * The method relies on attributes set during :meth:`fit`
+              (e.g. ``self.age_edges_`` or ``self.spend_edges_``); therefore
+              calling it before fitting will raise ``AttributeError``.
+            * Cryo-sleep interactions are implemented as simple pairwise
+              products rather than full polynomial features for efficiency.
+            * Missing groups that appear only in validation or test data are
+              filled with sentinel value ``-1`` after lookup.
+        """
+
         d = d.copy()
 
         # Age impute + bin
@@ -276,9 +399,21 @@ class SpaceshipTransformer(BaseEstimator, TransformerMixin):
         return d
 
     def get_feature_names_out(self, input_features=None):
+        """Return the feature names produced by :py:meth:`transform`.
+
+        scikit-learn calls this to align SHAP values, etc.
+
+        Args:
+            input_features: Unused; kept for API fidelity.
+
+        Raises:
+            RuntimeError: If the transformer is called before :py:meth:`fit`.
+
+        Returns:
+            np.ndarray: Array of string feature names (after one-hot encoding
+            and any post-drop column removal).
         """
-        scikit-learn asks for this to expose the names after transform().
-        """
+
         if not hasattr(self, "ohe_"):
             raise RuntimeError("Must call .fit() first")
         names = np.concatenate(

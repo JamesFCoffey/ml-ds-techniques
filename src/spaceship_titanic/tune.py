@@ -1,3 +1,20 @@
+"""Hyper-parameter optimization objectives for gradient-boosting models.
+
+This module wraps the Optuna search spaces for the three tree boosters used in
+the Spaceship Titanic project:
+
+* **CatBoost** – handles categorical features on-device and offers GPU training.
+* **LightGBM** – histogram-based GBT with efficient GPU implementation.
+* **XGBoost** – reference boosted tree library, GPU or CPU.
+
+Each public helper returns a *closure* that Optuna can pass to
+`Study.optimize()`.  That closure trains the model inside every fold of a
+supplied `cv` splitter, scores mean accuracy, and lets Optuna maximize the
+result.  Keeping the factories here decouples notebook experimentation from the
+core training logic.
+
+"""
+
 import catboost as cb
 import lightgbm as lgb
 import numpy as np
@@ -8,6 +25,29 @@ from .train import make_fold_data
 
 
 def objective_cat(cv, X, y, groups, gpus):
+    """Create a CatBoost Optuna objective.
+
+    Args:
+        cv (BaseCrossValidator): Group-aware cross-validator that yields
+            `(train_idx, val_idx)` pairs.
+        X (pd.DataFrame): Feature matrix **before** transformation.
+        y (pd.Series | np.ndarray): Binary target aligned with ``X``.
+        groups (pd.Series | np.ndarray): Group labels used by ``cv`` to avoid
+            leakage.
+        gpus (bool): If *True*, enable GPU training.
+
+    Returns:
+        Callable[[optuna.trial.Trial], float]: Objective that Optuna can
+        maximise. The objective trains CatBoost with early stopping on each
+        fold and returns the **mean fold accuracy**.
+
+    Notes:
+        The search space tunes depth, learning rate, regularization, bagging
+        temperature and border count while capping iterations at 4 000 with
+        early stopping after 50 rounds.
+
+    """
+
     def _objective(trial):
         params = {
             "loss_function": "Logloss",
@@ -42,6 +82,30 @@ def objective_cat(cv, X, y, groups, gpus):
 
 
 def objective_lgb(cv, X, y, groups):
+    """Create a LightGBM Optuna objective.
+
+    Args:
+        cv (BaseCrossValidator): Cross-validator that respects group structure.
+        X (pd.DataFrame): Raw features.
+        y (pd.Series | np.ndarray): Binary labels.
+        groups (pd.Series | np.ndarray): Group identifiers for CV splitting.
+
+    Returns:
+        Callable[[optuna.trial.Trial], float]: Objective that trains a
+        LightGBM model in each fold (early stopping 50 rounds) and returns the
+        mean validation accuracy.
+
+    Search Space:
+        * ``learning_rate``  – log-uniform 0.01-0.2
+        * ``num_leaves``     – 15-63
+        * ``min_data_in_leaf``
+        * ``feature_fraction`` / ``bagging_fraction`` / ``bagging_freq``
+        * ``lambda_l1`` / ``lambda_l2``
+
+    GPU training is forced via ``device_type='gpu'`` for speed.
+
+    """
+
     def _objective(trial):
         params = {
             "objective": "binary",
@@ -85,6 +149,26 @@ def objective_lgb(cv, X, y, groups):
 
 
 def objective_xgb(cv, X, y, groups, gpus):
+    """Create an XGBoost Optuna objective.
+
+    Args:
+        cv (BaseCrossValidator): Group-aware splitter.
+        X (pd.DataFrame): Feature frame.
+        y (pd.Series | np.ndarray): Target vector.
+        groups (pd.Series | np.ndarray): Group labels to keep folds disjoint.
+        gpus (bool): Enable GPU histogram algorithm when *True*.
+
+    Returns:
+        Callable[[optuna.trial.Trial], float]: Objective function that
+        early-stops after 40 rounds and reports mean accuracy across folds.
+
+    Tuned Hyper-parameters:
+        ``learning_rate``, ``max_depth``, ``min_child_weight``, ``gamma``,
+        ``subsample``, ``colsample_bytree``, ``reg_alpha``, ``reg_lambda``,
+        and ``n_estimators`` (800-2500).
+
+    """
+
     def _objective(trial):
         params = {
             "learning_rate": trial.suggest_float("lr", 0.01, 0.2, log=True),

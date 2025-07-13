@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spaceship_titanic"
+version = "0.1.0"         # ←  this is what the error complained about
+authors = [
+  {name = "Your Name", email = "you@example.com"},
+]
+description = "Utilities for the Kaggle Spaceship Titanic competition"
+readme = "README.md"
+requires-python = ">=3.9"
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -14,7 +14,7 @@ ml-ds-techniques/
 │   ├── art_creation_gan.ipynb
 │   ├── connect_x.ipynb
 │   ├── contradiction_detection.ipynb
-│   ├── digit-recognizer.ipynb
+│   ├── digit_recognizer.ipynb
 │   ├── flower_classification.ipynb
 │   ├── forecasting_store_sales.ipynb
 │   ├── house_prices.ipynb
@@ -69,7 +69,7 @@ challenge when referencing these solutions.
 
 ### Digit Recognizer
 
-* **notebook**: `digit-recognizer.ipynb`
+* **notebook**: `digit_recognizer.ipynb`
 * **competition**: Digit Recognizer
 
   * Kaggle. Digit Recognizer.

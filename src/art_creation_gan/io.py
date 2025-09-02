@@ -10,7 +10,7 @@ and inference scripts.
 """
 
 import tensorflow as tf
-from constants import AUTO, BATCH, BUFFER, IMG_SIZE, SEED
+from .constants import AUTO, BATCH, BUFFER, IMG_SIZE, SEED
 
 # Feature description mirrors Kaggle’s TFRecord schema
 _IMAGE_FEATURE_DESCRIPTION = {

@@ -8,8 +8,8 @@ to the low‑level blocks automatically propagates to both models.
 """
 
 import tensorflow as tf
-from blocks import downsample, upsample
-from constants import IMG_SIZE, OUTPUT_CHANNELS
+from .blocks import downsample, upsample
+from .constants import IMG_SIZE, OUTPUT_CHANNELS
 from tensorflow import keras
 from tensorflow.keras import layers
 

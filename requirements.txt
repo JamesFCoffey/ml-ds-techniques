@@ -1,0 +1,20 @@
+numpy>=1.22,<2.0
+pandas>=1.5,<2.3
+scikit-learn>=1.2,<1.5
+
+# Hyperparameter optimization
+optuna>=3.4
+
+# Gradient-boosted trees toolkits
+xgboost>=1.7,<2.0
+lightgbm>=3.3
+catboost>=1.1
+ydf>=0.3
+
+# Time-series and stats
+statsmodels>=0.13
+
+# Deep learning / NLP
+tensorflow>=2.13
+keras-tuner>=1.4
+transformers>=4.35

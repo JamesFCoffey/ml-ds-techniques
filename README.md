@@ -14,7 +14,7 @@ ml-ds-techniques/
 │   ├── art_creation_gan.ipynb
 │   ├── connect_x.ipynb
 │   ├── contradiction_detection.ipynb
-│   ├── digit_recognizer.ipynb
+│   ├── digit-recognizer.ipynb
 │   ├── flower_classification.ipynb
 │   ├── forecasting_store_sales.ipynb
 │   ├── house_prices.ipynb
@@ -23,67 +23,26 @@ ml-ds-techniques/
 │   ├── spaceship_titanic.ipynb
 │   └── titanic.ipynb
 ├── src/
-│   ├── art_creation_gan/
-│   │   ├── load_data.py
-│   │   ├── featurize.py
-│   │   └── train.py
-│   ├── common/
-│   │   ├── data_io.py
-│   │   ├── feature_tools.py
-│   │   └── model_eval.py
-│   ├── connect_x/
-│   │   ├── load_data.py
-│   │   ├── featurize.py
-│   │   └── train.py
-│   ├── contradiction_detection/
-│   │   ├── load_data.py
-│   │   ├── featurize.py
-│   │   └── train.py
-│   ├── digit_recognizer/
-│   │   ├── load_data.py
-│   │   ├── featurize.py
-│   │   └── train.py
-│   ├── flower_classification/
-│   │   ├── load_data.py
-│   │   ├── featurize.py
-│   │   └── train.py
-│   ├── forecasting_store_sales/
-│   │   ├── load_data.py
-│   │   ├── featurize.py
-│   │   └── train.py
-│   ├── house_prices/
-│   │   ├── load_data.py
-│   │   ├── featurize.py
-│   │   └── train.py
-│   ├── llm_classification_finetuning/
-│   │   ├── load_data.py
-│   │   ├── featurize.py
-│   │   └── train.py
-│   ├── nlp_disaster_tweets/
-│   │   ├── load_data.py
-│   │   ├── featurize.py
-│   │   └── train.py
-│   ├── spaceship_titanic/
-│   │   ├── load_data.py
-│   │   ├── featurize.py
-│   │   └── train.py
-│   └── titanic/
-│       ├── load_data.py
-│       ├── featurize.py
-│       └── train.py
+│   ├── art_creation_gan/                     ← CycleGAN (models, losses, io)
+│   ├── contradiction_detection/              ← HF transformers helpers
+│   ├── digit_recognizer/                     ← MNIST CNN + tuner
+│   ├── flower_classification/                ← EfficientNet utilities
+│   ├── forecasting_store_sales/              ← TS features + hybrid predict
+│   ├── house_prices/                         ← preprocessing + objectives
+│   ├── spaceship_titanic/                    ← features, training, tuning
+│   └── titanic/                              ← preprocessing + hyperopt
 ├── requirements.txt
-├── .gitignore
+├── pyproject.toml
+├── LICENSE
 └── README.md
 ```
 
-* **notebooks/**: Self-contained Jupyter analyses—from loading data to model
-  evaluation.
-* **src/common/**: Generic utilities shared across projects (I/O, feature tools,
-  evaluation helpers).
-* **src/\<competition\_name>/**: Project-specific modules, so each notebook can
-  run independently.
-* **requirements.txt**: Exact Python package versions.
-* **.gitignore**: Excludes environment files, data dumps, and editor artifacts.
+* **notebooks/**: Self-contained Jupyter analyses.
+* **src/<project>/**: Project utilities (feature engineering, modeling, tuning)
+  imported by notebooks.
+* **requirements.txt**: Runtime dependencies.
+* **pyproject.toml**: Packaging metadata (editable install via `pip -e .`).
+* **LICENSE**: MIT.
 
 ---
 
@@ -94,25 +53,23 @@ challenge when referencing these solutions.
 
 ### House Prices Prediction
 
-* **notebook**: `house_prices_prediction.ipynb`
+* **notebook**: `house_prices.ipynb`
 * **competition**: House Prices - Advanced Regression Techniques
 
-  * Anna Montoya and DataCanary. House Prices - Advanced Regression Techniques.
-    [https://kaggle.com/competitions/house-prices-advanced-regression-techniques](https://kaggle.com/competitions/house-prices-advanced-regression-techniques),
-    2016. Kaggle.
+  * Kaggle: https://www.kaggle.com/competitions/house-prices-advanced-regression-techniques
 
-### Titanic Data Analysis
+### Titanic
 
-* **notebook**: `titanic_data_analysis.ipynb`
+* **notebook**: `titanic.ipynb`
 * **competition**: Titanic: Machine Learning from Disaster
 
   * Kaggle. Titanic: Machine Learning from Disaster.
     [https://kaggle.com/competitions/titanic](https://kaggle.com/competitions/titanic),
     2012. Kaggle.
 
-### Digit Recognition Business Overview
+### Digit Recognizer
 
-* **notebook**: `digit_recognition_business_overview.ipynb`
+* **notebook**: `digit-recognizer.ipynb`
 * **competition**: Digit Recognizer
 
   * Kaggle. Digit Recognizer.
@@ -149,13 +106,9 @@ challenge when referencing these solutions.
 
    ```bash
    pip install -r requirements.txt
+   # optional: develop install to import from src/
+   pip install -e .
    ```
-
-   * **If using Mamba, also do**:
-
-     ```bash
-     mamba update --all
-     ```
 
 4. **Launch Jupyter Lab**
 

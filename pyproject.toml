@@ -3,14 +3,15 @@ requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "spaceship_titanic"
-version = "0.1.0"         # ←  this is what the error complained about
+name = "ml-ds-techniques"
+version = "0.1.0"
 authors = [
-  {name = "Your Name", email = "you@example.com"},
+  {name = "James Coffey"},
 ]
-description = "Utilities for the Kaggle Spaceship Titanic competition"
+description = "Reusable ML & data science utilities for Kaggle-style projects"
 readme = "README.md"
 requires-python = ">=3.9"
+license = { file = "LICENSE" }
 
 [tool.setuptools.packages.find]
 where = ["src"]
